@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -34,6 +35,7 @@ type option struct {
 	rename    string
 	ISBN      string
 	API       string
+	check     string
 }
 
 var isbnScanner = oned.NewEAN13Reader()
@@ -50,6 +52,7 @@ func main() {
 	flag.BoolVar(&op.test, "test", false, "保存されたデータを読み込んで-renameをテスト")
 	flag.StringVar(&op.rename, "rename", "[{{.Author}}] {{.Title}} {{with .Publisher}}[{{.}}]{{end}}{{with .Pubdate}}[{{.}}]{{end}}[ISBN {{.ISBN}}]", "新しいフォルダ名")
 	flag.StringVar(&op.API, "API", "openbd,google,kokkai", "使用するWebAPIとアクセス順番")
+	flag.StringVar(&op.check, "check", "", "ISBN13が記入されたファイルのパス。存在すればバーコードスキャンをしない")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options] フォルダパス \n", os.Args[0])
@@ -104,9 +107,21 @@ func main() {
 		}
 		log.Fatalln(err)
 	} else if stat.IsDir() {
-		isbn := checkDir(&op)
-		if isbn != "" {
-			op.ISBN = isbn
+		if op.check != "" {
+			isbn13, err := ioutil.ReadFile(op.check)
+			if err == nil {
+				tmp := regexp.MustCompile(`\D`).ReplaceAll(isbn13, nil)
+				if len(tmp) == 13 {
+					op.ISBN = string(tmp)
+					log.Printf("check: %s\n", op.check)
+				}
+			}
+		}
+		if op.ISBN == "" {
+			isbn := checkDir(&op)
+			if isbn != "" {
+				op.ISBN = isbn
+			}
 		}
 	} else {
 		log.Fatalln("対象フォルダを指定してください")
