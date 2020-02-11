@@ -23,19 +23,20 @@ import (
 )
 
 type option struct {
-	row       int
-	input     string
-	headCount int
-	tailCount int
-	noRotate  bool
-	noAccess  bool
-	noRename  bool
-	save      bool
-	test      bool
-	rename    string
-	ISBN      string
-	API       string
-	check     string
+	row        int
+	input      string
+	headCount  int
+	tailCount  int
+	noRotate   bool
+	noAccess   bool
+	noRename   bool
+	save       bool
+	test       bool
+	rename     string
+	ISBN       string
+	API        string
+	check      string
+	checknames bool
 }
 
 var isbnScanner = oned.NewEAN13Reader()
@@ -53,6 +54,7 @@ func main() {
 	flag.StringVar(&op.rename, "rename", "[{{.Author}}] {{.Title}} {{with .Publisher}}[{{.}}]{{end}}{{with .Pubdate}}[{{.}}]{{end}}[ISBN {{.ISBN}}]", "新しいフォルダ名")
 	flag.StringVar(&op.API, "API", "openbd,google,kokkai", "使用するWebAPIとアクセス順番")
 	flag.StringVar(&op.check, "check", "", "ISBN13が記入されたファイルのパス。存在すればバーコードスキャンをしない")
+	flag.BoolVar(&op.checknames, "checknames", false, "フォルダ名からISBN番号を読み取る")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options] フォルダパス \n", os.Args[0])
@@ -74,6 +76,13 @@ func main() {
 			apis = append(apis, &googleAPI{})
 		case "kokkai":
 			apis = append(apis, &kokkaiAPI{})
+		default:
+			api, err := NewWebSite(apiname + ".yml")
+			if err != nil {
+				log.Fatalf("(%s) %s\n", apiname, err)
+			} else {
+				apis = append(apis, api)
+			}
 		}
 	}
 
@@ -115,6 +124,13 @@ func main() {
 					op.ISBN = string(tmp)
 					log.Printf("check: %s\n", op.check)
 				}
+			}
+		} else if op.checknames {
+			r := regexp.MustCompile(`\d{13}|\d{9}[xX]|\d{10}`)
+			list := r.FindAllString(op.input, -1)
+			for _, txt := range list {
+				op.ISBN = txt
+				break
 			}
 		}
 		if op.ISBN == "" {

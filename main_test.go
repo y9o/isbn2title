@@ -8,8 +8,8 @@ import (
 
 func TestTemplate(t *testing.T) {
 
-	apis := make([]isbnAPI, 0, 3)
-	for _, apiname := range strings.Split("google,openbd,kokkai", ",") {
+	apis := make([]isbnAPI, 0, 4)
+	for _, apiname := range strings.Split("google,openbd,kokkai,calilWEB", ",") {
 		switch strings.ToLower(apiname) {
 		case "openbd":
 			apis = append(apis, &openbdAPI{})
@@ -17,6 +17,13 @@ func TestTemplate(t *testing.T) {
 			apis = append(apis, &googleAPI{})
 		case "kokkai":
 			apis = append(apis, &kokkaiAPI{})
+		default:
+			api, err := NewWebSite(apiname + ".yml")
+			if err != nil {
+				t.Errorf("err(%s)%s\n", apiname, err)
+			} else {
+				apis = append(apis, api)
+			}
 		}
 	}
 	for _, api := range apis {

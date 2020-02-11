@@ -1,0 +1,28 @@
+URL: https://calil.jp/book/{{.ISBN}}
+File: calil.txt
+UA: Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko
+Parse:
+  Author: #作者
+    XPath: #Xpathは複数指定でき、Joinで指定した文字で連結される
+    - //p[@itemprop="author"]/a
+    Join: ／
+    Regexp: # Patternにマッチした全てをReplaceに置き換える
+      Pattern: \s
+      Replace: ""
+  Title: #タイトル、サブタイトルなどを指定して、Joinにて連結される
+    XPath:
+    - //*[@itemprop="name"]
+    Join: " "
+  Publisher: #出版社
+    XPath:
+    - //*[@itemprop="publisher"]
+  Pubdate: #出版年
+    XPath:
+    - //*[@itemprop="datePublished"]
+    Regexp:
+      Pattern: \(|\)
+      Replace: ""
+  ISBN: #10桁、13桁の数字が存在する要素を指定
+    XPath:
+    - //*[@itemprop="isbn"]/..
+
