@@ -217,9 +217,17 @@ func (bd *webSite) parse() error {
 			break
 		}
 	}
-	if bd.Title == "" || bd.Author == "" {
-		//title,authorが空白ならエラー
-		return errors.New(bd.file + " unknown format")
+	if bd.Author == "" {
+		if bd.Publisher != "" {
+			bd.Author = bd.Publisher
+		} else {
+			//authorが空白ならエラー
+			return errors.New(bd.file + " Author not found")
+		}
+	}
+	if bd.Title == "" {
+		//titleが空白ならエラー
+		return errors.New(bd.file + " Title not found")
 	}
 	return nil
 }
